@@ -41,13 +41,29 @@ public class DoctorController {
                 HttpStatus.OK
         );
     }
+
+
+    @DeleteMapping("/delete-doctor/{doctorId}")
+    public ResponseEntity<StandardResponse> deleteById(@PathVariable String doctorId ){
+        doctorService.deleteDoctorById(doctorId);
+        return new ResponseEntity<>(
+                StandardResponse.builder()
+                        .code(200)
+                        .message("Doctor deleted with id "+doctorId)
+                        .data(null)
+                        .build(),
+                HttpStatus.OK
+        );
+    }
+
+
     @GetMapping("/find-all-doctors")
-    public ResponseEntity<StandardResponse> findAllDoctors(){
+    public ResponseEntity<StandardResponse> findAllDoctors(@RequestParam String searchText, @RequestParam int page, @RequestParam int size){
         return new ResponseEntity<>(
                 StandardResponse.builder()
                         .code(200)
                         .message("All doctors retrieved")
-                        .data(null)
+                        .data(doctorService.findAllDoctors(searchText, page, size))
                         .build(),
                 HttpStatus.OK
         );
@@ -67,6 +83,10 @@ public class DoctorController {
                 HttpStatus.FOUND
         );
     }
+
+
+
+
 
     @GetMapping("/test-web-client")
     public String test(){

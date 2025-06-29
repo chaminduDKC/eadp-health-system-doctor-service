@@ -6,7 +6,11 @@ import lombok.Data;
 @Data
 @Builder
 public class DoctorResponseDto {
+    private String doctorId;
+    private String name;
+    private String licenceNo;
     private String phoneNumber;
+    private String email;
     private String specialization;
     private String experience;
     private String hospital;

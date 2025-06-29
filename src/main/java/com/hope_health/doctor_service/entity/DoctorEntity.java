@@ -18,6 +18,18 @@ public class DoctorEntity {
     @Value("doctor_id")
     private String doctorId;
 
+    private String name;
+
+    private String city;
+
+    private String email;
+
+    private String address;
+
+    private String experience;
+
+    private String phone;
+
     private String specialization;
 
     @Value("licence_no")
