@@ -35,16 +35,5 @@ public class SecurityConfig {
         return http.build();
     }
 
-//    @Bean
-//    public JwtDecoder jwtDecoder(OAuth2ResourceServerProperties properties) {
-//        return JwtDecoders.fromIssuerLocation(properties.getJwt().getIssuerUri());
-//    }
-//
-//    @Bean
-//    public JwtAuthenticationConverter jwtAuthenticationConverter() {
-//        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-//        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRealmRoleConverter());
-//        return converter;
-//    }
 }
 

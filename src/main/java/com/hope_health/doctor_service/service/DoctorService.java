@@ -1,6 +1,7 @@
 package com.hope_health.doctor_service.service;
 
 import com.hope_health.doctor_service.dto.request.DoctorRequestDto;
+import com.hope_health.doctor_service.dto.request.UserUpdateRequest;
 import com.hope_health.doctor_service.dto.response.DoctorResponseDto;
 import com.hope_health.doctor_service.util.DoctorResponsePaginated;
 
@@ -9,4 +10,8 @@ public interface DoctorService {
     DoctorResponsePaginated findAllDoctors(String searchText, int page, int size);
 
      void deleteDoctorById( String doctorId);
+
+    DoctorResponseDto updateDoctor(UserUpdateRequest requestDto, String doctorId);
+
+    long countAll();
 }

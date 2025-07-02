@@ -2,6 +2,7 @@ package com.hope_health.doctor_service.controller;
 
 import com.hope_health.doctor_service.config.WebClientConfig;
 import com.hope_health.doctor_service.dto.request.DoctorRequestDto;
+import com.hope_health.doctor_service.dto.request.UserUpdateRequest;
 import com.hope_health.doctor_service.service.DoctorService;
 import com.hope_health.doctor_service.util.StandardResponse;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +31,7 @@ public class DoctorController {
         );
     }
 
-    @GetMapping("/{doctorId}")
+    @GetMapping("/find-doctor/{doctorId}")
     public ResponseEntity<StandardResponse> getDocById(@PathVariable String doctorId ){
         return new ResponseEntity<>(
                 StandardResponse.builder()
@@ -42,6 +43,18 @@ public class DoctorController {
         );
     }
 
+    @PutMapping("/update-doctor/{doctorId}")
+    public ResponseEntity<StandardResponse> updateDoctor(@RequestBody UserUpdateRequest requestDto, @PathVariable String doctorId){
+        System.out.println(requestDto);
+        return new ResponseEntity<>(
+                StandardResponse.builder()
+                        .code(200)
+                        .message("Doctor Updated successfully")
+                        .data(doctorService.updateDoctor(requestDto, doctorId))
+                        .build(),
+                HttpStatus.OK
+        );
+    }
 
     @DeleteMapping("/delete-doctor/{doctorId}")
     public ResponseEntity<StandardResponse> deleteById(@PathVariable String doctorId ){
@@ -86,6 +99,17 @@ public class DoctorController {
 
 
 
+    @GetMapping("/count-all")
+    public ResponseEntity<StandardResponse> countAll(){
+        return new ResponseEntity<>(
+                StandardResponse.builder()
+                        .message("All doctor count")
+                        .code(200)
+                        .data(doctorService.countAll())
+                        .build(),
+                HttpStatus.OK
+        );
+    }
 
 
     @GetMapping("/test-web-client")

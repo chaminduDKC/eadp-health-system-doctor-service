@@ -2,6 +2,7 @@ package com.hope_health.doctor_service.service.impl;
 
 import com.hope_health.doctor_service.config.WebClientConfig;
 import com.hope_health.doctor_service.dto.request.DoctorRequestDto;
+import com.hope_health.doctor_service.dto.request.UserUpdateRequest;
 import com.hope_health.doctor_service.dto.response.DoctorResponseDto;
 import com.hope_health.doctor_service.entity.DoctorEntity;
 import com.hope_health.doctor_service.repo.DoctorRepo;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -73,8 +76,48 @@ public class DoctorServiceImpl implements DoctorService {
         }
     }
 
+    @Override
+    public DoctorResponseDto updateDoctor(UserUpdateRequest requestDto, String doctorId) {
+        Optional<DoctorEntity> doctorEntity = doctorRepo.findById(doctorId);
+        if(doctorEntity.isPresent()){
+            DoctorEntity doctor = doctorEntity.get();
+            doctor.setAddress(requestDto.getAddress());
+            doctor.setCity(requestDto.getCity());
+            doctor.setName(requestDto.getName());
+            doctor.setExperience(requestDto.getExperience());
+            doctor.setEmail(requestDto.getEmail());
+            doctor.setHospital(requestDto.getHospital());
+            doctor.setPhone(requestDto.getPhone());
+            doctor.setSpecialization(requestDto.getSpecialization());
+            doctor.setLicenceNo(requestDto.getLicenceNo());
+
+            doctorRepo.save(doctor);
+            String userId = doctor.getUserId();
+
+            UserUpdateRequest updateRequest = new UserUpdateRequest();
+            updateRequest.setName(doctor.getName());
+            updateRequest.setEmail(doctor.getEmail());
+            try {
+                webClientConfig.webClient().put().uri("http://localhost:9090/api/users/update-user/{userid}", userId)
+                        .bodyValue(updateRequest)
+                        .retrieve().bodyToMono(Void.class).block();
+            } catch (Exception e){
+                System.out.println("failed to connect user service");
+                return null;
+            }
+            return toResponse(doctor);
+        }
+        throw new RuntimeException("doctor is not available for this id "+ doctorId);
+    }
+
+    @Override
+    public long countAll() {
+        return doctorRepo.countAll("");
+    }
+
     private DoctorResponseDto toResponse(DoctorEntity entity){
         return DoctorResponseDto.builder()
+                .city(entity.getCity())
                 .doctorId(entity.getDoctorId())
                 .name(entity.getName())
                 .licenceNo(entity.getLicenceNo())
