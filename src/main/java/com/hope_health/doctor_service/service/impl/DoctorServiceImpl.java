@@ -11,6 +11,7 @@ import com.hope_health.doctor_service.util.DoctorResponsePaginated;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.web.reactive.function.client.WebClientException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -67,8 +68,19 @@ public class DoctorServiceImpl implements DoctorService {
 
             String userId = doctor.getUserId();
             doctorRepo.deleteById(doctorId);
-            webClientConfig.webClient().delete().uri("http://localhost:9090/api/users/delete-user/{userid}", userId)
-                    .retrieve().bodyToMono(Boolean.class).block();
+            try {
+                webClientConfig.webClient().delete().uri("http://localhost:9090/api/users/delete-user/{userid}", userId)
+                        .retrieve().bodyToMono(Boolean.class).block();
+            } catch (WebClientException e) {
+                throw new RuntimeException("Failed to delete from user service  " +e.getMessage());
+            }
+
+            try {
+                webClientConfig.webClient().delete().uri("http://localhost:9093/api/bookings/delete-booking-by-doctor/{doctorId}", doctorId)
+                        .retrieve().bodyToMono(Boolean.class).block();
+            } catch (WebClientException e) {
+                throw new RuntimeException("Failed to delete from booking service  " +e.getMessage());
+            }
 
             System.out.println("deleted");
         } catch (Exception e){
@@ -127,6 +139,7 @@ public class DoctorServiceImpl implements DoctorService {
                 .specialization(entity.getSpecialization())
                 .email(entity.getEmail())
                 .hospital(entity.getHospital())
+                .userId(entity.getUserId())
                 .build();
     }
 }

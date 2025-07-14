@@ -16,4 +16,5 @@ public class DoctorResponseDto {
     private String experience;
     private String hospital;
     private String address;
+    private String userId;
 }

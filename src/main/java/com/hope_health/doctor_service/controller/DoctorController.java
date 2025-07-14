@@ -21,6 +21,7 @@ public class DoctorController {
     @PostMapping("/create-doctor")
     @PreAuthorize("hasRole('admin')")
     public ResponseEntity<StandardResponse> createDoctor(@RequestBody DoctorRequestDto request) {
+        System.out.println("create doctor called");
         doctorService.createDoctor(request);
         return ResponseEntity.ok(
                 StandardResponse.builder()
@@ -77,6 +78,18 @@ public class DoctorController {
                         .code(200)
                         .message("All doctors retrieved")
                         .data(doctorService.findAllDoctors(searchText, page, size))
+                        .build(),
+                HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/countAll")
+    public ResponseEntity<StandardResponse> countAllDoctors() {
+        return new ResponseEntity<>(
+                StandardResponse.builder()
+                        .code(200)
+                        .message("Total number of doctors")
+                        .data(doctorService.countAll())
                         .build(),
                 HttpStatus.OK
         );

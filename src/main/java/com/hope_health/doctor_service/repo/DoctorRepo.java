@@ -21,6 +21,6 @@ public interface DoctorRepo extends JpaRepository<DoctorEntity, String> {
     @Query(nativeQuery = true, value = "SELECT COUNT(doctor_id) FROM doctors WHERE email LIKE %?1%")
     long countAll(String searchText);
 
-    @Query(nativeQuery = true, value = "SELECT * FROM doctors WHERE email LIKE %?1%")
+    @Query(nativeQuery = true, value = "SELECT * FROM doctors WHERE email LIKE %?1% OR name LIKE %?1% OR specialization LIKE %?1%")
     Page<DoctorEntity> searchAll(String searchText, Pageable pageable);
 }
