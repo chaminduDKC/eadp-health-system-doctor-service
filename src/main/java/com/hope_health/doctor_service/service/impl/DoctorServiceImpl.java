@@ -2,6 +2,7 @@ package com.hope_health.doctor_service.service.impl;
 
 import com.hope_health.doctor_service.config.WebClientConfig;
 import com.hope_health.doctor_service.dto.request.DoctorRequestDto;
+import com.hope_health.doctor_service.dto.request.RecentActivityRequest;
 import com.hope_health.doctor_service.dto.request.UserUpdateRequest;
 import com.hope_health.doctor_service.dto.response.DoctorResponseDto;
 import com.hope_health.doctor_service.entity.DoctorEntity;
@@ -13,10 +14,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientException;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -46,8 +45,23 @@ public class DoctorServiceImpl implements DoctorService {
                     .experience(request.getExperience())
                     .build();
             DoctorEntity saved = doctorRepo.save(doctor);
-        } catch (Exception e){
-            throw new RuntimeException("Failed to save doctor");
+
+            RecentActivityRequest activityRequest = RecentActivityRequest.builder()
+                    .action(request.getName() +" added as a Doctor")
+                    .dateTime(LocalDateTime.now())
+                    .description("No Description")
+                    .build();
+
+            webClientConfig.webClient().post().uri("http://localhost:9094/api/recent-activities/create-activity")
+                    .bodyValue(activityRequest)
+                    .retrieve()
+                    .bodyToMono(RecentActivityRequest.class)
+                    .block();
+
+        } catch (WebClientException e){
+            throw new RuntimeException("Doctor Saved.Failed to connect with recent activity service " + e.getMessage());
+        } catch (Exception e) {
+            throw new RuntimeException("Doctor save failed");
         }
     }
 
