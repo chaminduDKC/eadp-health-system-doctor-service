@@ -9,8 +9,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class UserUpdateRequest {
     private String name;
-    private String password;
-    private String email;
     private String phone;
     private String specialization;
     private String experience;

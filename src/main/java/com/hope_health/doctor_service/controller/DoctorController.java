@@ -56,19 +56,41 @@ public class DoctorController {
                 HttpStatus.OK
         );
     }
-
-    @DeleteMapping("/delete-doctor/{doctorId}")
-    public ResponseEntity<StandardResponse> deleteById(@PathVariable String doctorId ){
-        doctorService.deleteDoctorById(doctorId);
+    @PutMapping("/update-email/{userId}")
+    public ResponseEntity<StandardResponse> updateEmail(@RequestBody String email, @PathVariable String userId){
+        System.out.println(email);
         return new ResponseEntity<>(
                 StandardResponse.builder()
                         .code(200)
-                        .message("Doctor deleted with id "+doctorId)
-                        .data(null)
+                        .message("Doctor Updated successfully")
+                        .data(doctorService.updateEmail(email, userId))
                         .build(),
                 HttpStatus.OK
         );
     }
+
+    @DeleteMapping("/delete-doctor/{doctorId}")
+    public ResponseEntity<StandardResponse> deleteById(@PathVariable String doctorId, @RequestParam String userId) {
+        try {
+            doctorService.deleteDoctorById(doctorId, userId);
+            return ResponseEntity.ok(
+                    StandardResponse.builder()
+                            .code(200)
+                            .message("Doctor deleted with id " + doctorId)
+                            .data(null)
+                            .build()
+            );
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                    StandardResponse.builder()
+                            .code(404)
+                            .message(e.getMessage())
+                            .data(null)
+                            .build()
+            );
+        }
+    }
+
 
 
     @GetMapping("/find-all-doctors")
@@ -123,6 +145,21 @@ public class DoctorController {
                 HttpStatus.OK
         );
     }
+
+    @GetMapping("/find-doctors-by-specialization")
+    public ResponseEntity<StandardResponse> findDoctorBySpecialization(@RequestParam String specialization){
+        System.out.println(specialization + " Called");
+        return new ResponseEntity<>(
+                StandardResponse.builder()
+                        .message("doctor found")
+                        .code(200)
+                        .data(doctorService.findDoctorBySpecialization(specialization))
+                        .build(),
+                HttpStatus.OK
+        );
+    }
+
+
 
 
     @GetMapping("/test-web-client")

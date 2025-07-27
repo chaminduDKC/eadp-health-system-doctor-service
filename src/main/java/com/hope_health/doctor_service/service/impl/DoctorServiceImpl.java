@@ -9,11 +9,14 @@ import com.hope_health.doctor_service.entity.DoctorEntity;
 import com.hope_health.doctor_service.repo.DoctorRepo;
 import com.hope_health.doctor_service.service.DoctorService;
 import com.hope_health.doctor_service.util.DoctorResponsePaginated;
+import com.hope_health.doctor_service.util.StandardResponse;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientException;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -76,31 +79,71 @@ public class DoctorServiceImpl implements DoctorService {
     }
 
     @Override
-    public void deleteDoctorById(String doctorId) {
-        try{
-            DoctorEntity doctor = doctorRepo.findById(doctorId).orElseThrow(() -> new RuntimeException("Doctor not found with given id"));
+    @Transactional
+    public void deleteDoctorById(String doctorId, String userId) {
+        System.out.println("Doctor id is "+doctorId);
+        DoctorEntity doctor = doctorRepo.findByDoctorId(doctorId)
+                .orElseThrow(() -> new RuntimeException("Doctor not found with given id"));
 
-            String userId = doctor.getUserId();
+
+        // 1. Delete doctor from doctorRepo
+        try {
+
             doctorRepo.deleteById(doctorId);
-            try {
-                webClientConfig.webClient().delete().uri("http://localhost:9090/api/users/delete-user/{userid}", userId)
-                        .retrieve().bodyToMono(Boolean.class).block();
-            } catch (WebClientException e) {
-                throw new RuntimeException("Failed to delete from user service  " +e.getMessage());
-            }
 
-            try {
-                webClientConfig.webClient().delete().uri("http://localhost:9093/api/bookings/delete-booking-by-doctor/{doctorId}", doctorId)
-                        .retrieve().bodyToMono(Boolean.class).block();
-            } catch (WebClientException e) {
-                throw new RuntimeException("Failed to delete from booking service  " +e.getMessage());
-            }
+            RecentActivityRequest activityRequest = RecentActivityRequest.builder()
+                    .action(doctor.getName() + " user deleted by admin : role [doctor]")
+                    .dateTime(LocalDateTime.now())
+                    .description("From doctor service")
+                    .build();
 
-            System.out.println("deleted");
-        } catch (Exception e){
-            System.out.println(e.getMessage());
+            webClientConfig.webClient()
+                    .post()
+                    .uri("http://localhost:9094/api/recent-activities/create-activity")
+                    .bodyValue(activityRequest)
+                    .retrieve()
+                    .bodyToMono(RecentActivityRequest.class)
+                    .block();
+        } catch (WebClientException e) {
+            System.out.println("Failed to connect with recent service");
+
+        } catch (Exception e) {
+            System.out.println("Failed to delete doctor from repo: " + e.getMessage());
         }
+
+
+        //
+        // 2. Delete user from user service
+        try {
+            webClientConfig.webClient()
+                    .delete()
+                    .uri("http://localhost:9090/api/users/delete-user/{userid}", userId)
+                    .retrieve()
+                    .bodyToMono(StandardResponse.class)
+                    .block();
+        } catch (WebClientException e) {
+            System.out.println("Failed to delete from user service: " + e.getMessage());
+        }
+
+        // 3. Record recent activity
+
+
+        // 4. Delete doctor’s bookings from booking service
+        try {
+            webClientConfig.webClient()
+                    .delete()
+                    .uri("http://localhost:9093/api/bookings/delete-booking-by-doctor/{doctorId}", doctorId)
+                    .retrieve()
+                    .bodyToMono(Boolean.class)
+                    .block();
+
+        } catch (WebClientException e) {
+            System.out.println("Failed to delete from booking service : " + e.getMessage());
+        }
+
+        System.out.println("Delete flow completed.");
     }
+
 
     @Override
     public DoctorResponseDto updateDoctor(UserUpdateRequest requestDto, String doctorId) {
@@ -111,24 +154,52 @@ public class DoctorServiceImpl implements DoctorService {
             doctor.setCity(requestDto.getCity());
             doctor.setName(requestDto.getName());
             doctor.setExperience(requestDto.getExperience());
-            doctor.setEmail(requestDto.getEmail());
             doctor.setHospital(requestDto.getHospital());
             doctor.setPhone(requestDto.getPhone());
             doctor.setSpecialization(requestDto.getSpecialization());
             doctor.setLicenceNo(requestDto.getLicenceNo());
 
-            doctorRepo.save(doctor);
             String userId = doctor.getUserId();
-
-            UserUpdateRequest updateRequest = new UserUpdateRequest();
-            updateRequest.setName(doctor.getName());
-            updateRequest.setEmail(doctor.getEmail());
             try {
+                doctorRepo.save(doctor);
+
+                RecentActivityRequest activityRequest = RecentActivityRequest.builder()
+                        .action(doctor.getName() + " user updated : role [doctor]")
+                        .dateTime(LocalDateTime.now())
+                        .description("From doctor service")
+                        .build();
+
+                webClientConfig.webClient()
+                        .post()
+                        .uri("http://localhost:9094/api/recent-activities/create-activity")
+                        .bodyValue(activityRequest)
+                        .retrieve()
+                        .bodyToMono(RecentActivityRequest.class)
+                        .block();
+
+            } catch (WebClientException e){
+                System.out.println("Failed to connect with recent service");
+            }
+
+            catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            try {
+                UserUpdateRequest updateRequest = new UserUpdateRequest();
+                updateRequest.setName(doctor.getName());
+
                 webClientConfig.webClient().put().uri("http://localhost:9090/api/users/update-user/{userid}", userId)
                         .bodyValue(updateRequest)
                         .retrieve().bodyToMono(Void.class).block();
-            } catch (Exception e){
-                System.out.println("failed to connect user service");
+
+
+
+            } catch (WebClientException e){
+                System.out.println("failed to connect user service ");
+            }
+            catch (Exception e){
+                System.out.println("Something went wrong");
                 return null;
             }
             return toResponse(doctor);
@@ -140,6 +211,28 @@ public class DoctorServiceImpl implements DoctorService {
     public long countAll() {
         return doctorRepo.countAll("");
     }
+
+    @Override
+    public List<DoctorResponseDto> findDoctorBySpecialization(String specialization) {
+        System.out.println("specialization: " + specialization);
+        return doctorRepo.findDoctorBySpecialization(specialization).stream().map(this::toResponse).toList();
+
+    }
+
+    @Override
+    public Boolean updateEmail(String email, String userId) {
+        Optional<DoctorEntity> doctorEntity = doctorRepo.findByUserId(userId);
+        if(doctorEntity.isPresent()){
+            DoctorEntity doctor = doctorEntity.get();
+            doctor.setEmail(email);
+            doctorRepo.save(doctor);
+        } else {
+            throw new RuntimeException("doctor is not available for this id "+ userId);
+        }
+        return true;
+    }
+
+
 
     private DoctorResponseDto toResponse(DoctorEntity entity){
         return DoctorResponseDto.builder()
