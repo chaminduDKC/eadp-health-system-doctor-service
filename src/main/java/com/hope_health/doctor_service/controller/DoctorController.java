@@ -6,11 +6,15 @@ import com.hope_health.doctor_service.dto.request.UserUpdateRequest;
 import com.hope_health.doctor_service.service.DoctorService;
 import com.hope_health.doctor_service.util.StandardResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/doctors")
 @RequiredArgsConstructor
@@ -166,5 +170,17 @@ public class DoctorController {
     public String test(){
         return webClientConfig.webClient().get().uri("http://localhost:9090/api/users/test")
                 .retrieve().bodyToMono(String.class).block();
+    }
+
+    @GetMapping("/auth-doctor-details")
+    public ResponseEntity<StandardResponse> findDoctorByUserId(@AuthenticationPrincipal Jwt jwt) {
+        return new ResponseEntity<>(
+                StandardResponse.builder()
+                        .code(200)
+                        .message("Doctor retrieved by user id")
+                        .data(doctorService.findDoctorByUserId(jwt))
+                        .build(),
+                HttpStatus.OK
+        );
     }
 }

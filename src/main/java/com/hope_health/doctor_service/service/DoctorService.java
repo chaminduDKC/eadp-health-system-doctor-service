@@ -4,6 +4,7 @@ import com.hope_health.doctor_service.dto.request.DoctorRequestDto;
 import com.hope_health.doctor_service.dto.request.UserUpdateRequest;
 import com.hope_health.doctor_service.dto.response.DoctorResponseDto;
 import com.hope_health.doctor_service.util.DoctorResponsePaginated;
+import org.springframework.security.oauth2.jwt.Jwt;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -22,4 +23,5 @@ public interface DoctorService {
 
     Boolean updateEmail(String email, String userId);
 
+    DoctorResponseDto findDoctorByUserId(Jwt jwt);
 }

@@ -13,6 +13,7 @@ import com.hope_health.doctor_service.util.StandardResponse;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClientException;
 
@@ -232,6 +233,20 @@ public class DoctorServiceImpl implements DoctorService {
         return true;
     }
 
+    @Override
+    public DoctorResponseDto findDoctorByUserId(Jwt jwt) {
+        if(jwt != null && jwt.getSubject() != null) {
+            String userId = jwt.getSubject();
+            Optional<DoctorEntity> doctorEntity = doctorRepo.findByUserId(userId);
+            if(doctorEntity.isPresent()){
+                return toResponse(doctorEntity.get());
+            } else {
+                throw new RuntimeException("Doctor not found for this user id");
+            }
+        }
+        throw new RuntimeException("Invalid JWT token or userId not found in token");
+
+    }
 
 
     private DoctorResponseDto toResponse(DoctorEntity entity){
