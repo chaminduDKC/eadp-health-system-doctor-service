@@ -14,6 +14,6 @@ public class DoctorRequestDto {
     private String experience;
     private String hospital;
     private String address;
-    private String licenseNo;
+    private String licenceNo;
     private String city;
 }
