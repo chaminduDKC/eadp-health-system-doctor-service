@@ -51,17 +51,6 @@ public class DoctorServiceImpl implements DoctorService {
                     .build();
             DoctorEntity saved = doctorRepo.save(doctor);
 
-//            RecentActivityRequest activityRequest = RecentActivityRequest.builder()
-//                    .action(request.getName() +" added as a Doctor")
-//                    .dateTime(LocalDateTime.now())
-//                    .description("No Description")
-//                    .build();
-//
-//            webClientConfig.webClient().post().uri("http://localhost:9094/api/recent-activities/create-activity")
-//                    .bodyValue(activityRequest)
-//                    .retrieve()
-//                    .bodyToMono(RecentActivityRequest.class)
-//                    .block();
 
         } catch (WebClientException e){
             throw new RuntimeException("Doctor Saved.Failed to connect with recent activity service " + e.getMessage());
